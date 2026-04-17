@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🔒 Вход — PC Remote</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0d0d0d;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+       display:flex;align-items:center;justify-content:center;height:100dvh}
+  .card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:18px;
+        padding:36px 28px;width:340px;text-align:center;box-shadow:0 8px 32px #00000066}
+  .logo{font-size:40px;margin-bottom:10px}
+  h2{font-size:20px;margin-bottom:4px;color:#fff}
+  .sub{color:#555;font-size:11px;margin-bottom:28px;letter-spacing:1.5px;text-transform:uppercase}
+  input[type=password]{width:100%;padding:13px 14px;background:#222;border:1px solid #333;
+        border-radius:10px;color:#eee;font-size:16px;outline:none;margin-bottom:12px;
+        transition:border .2s;-webkit-appearance:none}
+  input[type=password]:focus{border-color:#4a9eff;box-shadow:0 0 0 2px #4a9eff22}
+  button{width:100%;padding:13px;background:#1a4a80;border:none;border-radius:10px;
+         color:#fff;font-size:16px;cursor:pointer;font-weight:600;
+         transition:background .15s;letter-spacing:.3px}
+  button:hover{background:#1e5799}
+  button:active{background:#163d6b}
+  .error{color:#ff6b6b;font-size:13px;margin-top:14px;
+         background:rgba(255,107,107,.08);padding:10px 12px;border-radius:8px;text-align:left}
+  .hint{color:#444;font-size:11px;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🖥️</div>
+  <h2>PC Remote</h2>
+  <div class="sub">// Secure Access</div>
+
+  <form method="post" action="/login">
+    <input type="password" name="password" placeholder="Пароль"
+           autofocus autocomplete="current-password">
+    <button type="submit">Войти →</button>
+  </form>
+
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <div class="hint">Сессия активна 2 часа</div>
+</div>
+</body>
+</html>

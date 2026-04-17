@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python stress_test.py)",
+      "Bash(python security_test.py)",
+      "Bash(python -c \"import config; print\\('✅ Config загружен успешно'\\)\")",
+      "Bash(python -c \"import config; print\\('Config loaded OK'\\)\")"
+    ]
+  }
+}
