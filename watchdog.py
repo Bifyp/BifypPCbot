@@ -1,3 +1,5 @@
+
+
 # watchdog.py — автоперезапуск bot.py если упал
 
 import subprocess

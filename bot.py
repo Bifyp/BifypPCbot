@@ -207,10 +207,4 @@ if __name__ == "__main__":
 
     logging.info("Polling запущен")
 
-    # Обработчик ошибок polling
-    def exception_handler(exception):
-        logging.exception("Bot polling error")
-        return True  # Продолжить работу после ошибки
-
-    bot.infinity_polling(timeout=30, long_polling_timeout=15,
-                         exception_handler=exception_handler)
+    bot.infinity_polling(timeout=30, long_polling_timeout=15)

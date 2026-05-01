@@ -2,6 +2,7 @@
 
 import mss, io, logging, time, threading, os, tempfile, hashlib
 import telebot
+import discord
 from PIL import Image, ImageDraw
 
 _monitor_threads = {}   # chat_id -> threading.Event (stop)
@@ -292,3 +293,44 @@ def _start_monitor(bot, message, is_allowed):
             stop_event.wait(interval)
 
     threading.Thread(target=run, daemon=True).start()
+
+
+# ─── Discord Support ──────────────────────────────────────────────────────────
+
+async def handle_discord(interaction: discord.Interaction):
+    """Discord handler для скриншотов"""
+    view = discord.ui.View(timeout=None)
+
+    btn_full = discord.ui.Button(label="📸 Весь экран", style=discord.ButtonStyle.primary, custom_id="scr_full")
+    btn_cursor = discord.ui.Button(label="🖱 С курсором", style=discord.ButtonStyle.primary, custom_id="scr_cursor")
+
+    async def full_callback(inter: discord.Interaction):
+        await inter.response.defer()
+        try:
+            buf = _get_cached_screenshot()
+            file = discord.File(buf, filename="screenshot.png")
+            await inter.followup.send("📸 Скриншот", file=file)
+            logging.info("Screenshot taken (full) - Discord")
+        except Exception as e:
+            await inter.followup.send(f"❌ {e}")
+            logging.exception("Screenshot error (full) - Discord")
+
+    async def cursor_callback(inter: discord.Interaction):
+        await inter.response.defer()
+        try:
+            buf = _get_cached_screenshot(with_cursor=True)
+            file = discord.File(buf, filename="screenshot.png")
+            await inter.followup.send("📸 С курсором", file=file)
+            logging.info("Screenshot taken (with cursor) - Discord")
+        except Exception as e:
+            await inter.followup.send(f"❌ {e}")
+            logging.exception("Screenshot error (cursor) - Discord")
+
+    btn_full.callback = full_callback
+    btn_cursor.callback = cursor_callback
+
+    view.add_item(btn_full)
+    view.add_item(btn_cursor)
+
+    embed = discord.Embed(title="📸 Скриншот", description="Выбери опцию:", color=discord.Color.blue())
+    await interaction.response.send_message(embed=embed, view=view)

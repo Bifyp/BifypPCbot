@@ -17,9 +17,9 @@
   #ws-dot.on{background:#4caf50;box-shadow:0 0 4px #4caf50}
   #ws-dot.off{background:#f44336}
   #latency{font-size:10px;color:#555;min-width:30px}
-  #screen-wrap{flex:1;position:relative;overflow:hidden;background:#000;cursor:none}
+  #screen-wrap{flex:1;position:relative;overflow:hidden;background:#000;cursor:crosshair}
   #screen{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
-  #cursor{position:absolute;width:22px;height:22px;pointer-events:none;transform:translate(-50%,-50%);display:none;z-index:20}
+  #cursor{position:absolute;width:30px;height:30px;pointer-events:none;transform:translate(-50%,-50%);display:block;z-index:20;opacity:1}
   #cursor svg{width:100%;height:100%;filter:drop-shadow(0 0 4px #ff000099)}
   #mouse-bar{display:flex;gap:5px;padding:6px 8px;background:#1a1a1a;border-top:1px solid #2a2a2a;flex-shrink:0}
   .m-btn{flex:1;padding:11px 0;border:1px solid #3a3a3a;border-radius:10px;background:#1e1e1e;color:#ccc;font-size:13px;cursor:pointer;text-align:center;user-select:none;transition:background .1s}
@@ -126,11 +126,9 @@
 <div id="screen-wrap">
   <img id="screen" src="/video_feed" alt="">
   <div id="cursor">
-    <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="11" cy="11" r="9" fill="none" stroke="#ff2020" stroke-width="2.5"/>
-      <line x1="11" y1="1" x2="11" y2="21" stroke="#ff2020" stroke-width="2"/>
-      <line x1="1" y1="11" x2="21" y2="11" stroke="#ff2020" stroke-width="2"/>
-      <circle cx="11" cy="11" r="2.5" fill="#ff2020"/>
+    <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="24" height="24" fill="#ffffff" stroke="#000000" stroke-width="4"/>
+      <rect x="11" y="11" width="8" height="8" fill="#ff0000"/>
     </svg>
   </div>
   <div id="scroll-strip">
@@ -249,6 +247,13 @@ function toNative(cx,cy){
 // ── Курсор ────────────────────────────────────────────────────────────────
 const curEl=document.getElementById("cursor");
 let hideTm;
+// Показываем курсор в центре при загрузке
+window.addEventListener('load', () => {
+  const wr = document.getElementById("screen-wrap").getBoundingClientRect();
+  curEl.style.left = (wr.width / 2) + "px";
+  curEl.style.top = (wr.height / 2) + "px";
+  curEl.style.display = "block";
+});
 function showCursor(cx,cy){
   const wr=document.getElementById("screen-wrap").getBoundingClientRect();
   curEl.style.left=(cx-wr.left)+"px";
@@ -256,7 +261,7 @@ function showCursor(cx,cy){
   curEl.style.display="block";
   clearTimeout(hideTm);
 }
-function scheduleCursorHide(){ hideTm=setTimeout(()=>curEl.style.display="none",1200); }
+// function scheduleCursorHide(){ hideTm=setTimeout(()=>curEl.style.display="none",1200); }
 
 // ── Touch тачпад ──────────────────────────────────────────────────────────
 let lastTs=0, touchStartX=0, touchStartY=0, lastMouseX=0, lastMouseY=0;
@@ -340,7 +345,7 @@ wrap.addEventListener("touchmove",e=>{
 
 wrap.addEventListener("touchend",e=>{
   if(!e.touches.length){
-    scheduleCursorHide();
+    // scheduleCursorHide();
     sendBatchedMove(); // Отправляем последнее движение
     if(moveTimer){
       clearTimeout(moveTimer);
@@ -357,7 +362,7 @@ wrap.addEventListener("mousemove",e=>{
   const c=toNative(e.clientX,e.clientY);
   wsSend({t:"move",x:c.x,y:c.y});
 });
-wrap.addEventListener("mouseleave",()=>scheduleCursorHide());
+wrap.addEventListener("mouseleave",()=>{/* scheduleCursorHide() */});
 
 // ── Клики ─────────────────────────────────────────────────────────────────
 function sendClick(btn,dbl=false){ wsSend({t:"click",b:btn,d:dbl}); }

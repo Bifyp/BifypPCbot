@@ -37,25 +37,43 @@ def register(bot, message):
     _send_dir(bot, message.chat.id, uid, _cdir(uid))
 
 
-def _send_dir(bot, chat_id, uid, path):
+def _send_dir(bot, chat_id, uid, path, message_id=None):
     try:
         entries = os.listdir(path)
     except PermissionError:
-        bot.send_message(chat_id, f"❌ Нет доступа: `{path}`")
+        text = f"❌ Нет доступа: `{path}`"
+        if message_id:
+            bot.edit_message_text(text, chat_id, message_id)
+        else:
+            bot.send_message(chat_id, text)
         logging.error(f"Permission denied accessing: {path}")
         return
     except FileNotFoundError:
-        bot.send_message(chat_id, f"❌ Папка не найдена: `{path}`")
+        text = f"❌ Папка не найдена: `{path}`"
+        if message_id:
+            bot.edit_message_text(text, chat_id, message_id)
+        else:
+            bot.send_message(chat_id, text)
         logging.error(f"Directory not found: {path}")
         return
     except Exception as e:
-        bot.send_message(chat_id, f"❌ Ошибка: {e}")
+        text = f"❌ Ошибка: {e}"
+        if message_id:
+            bot.edit_message_text(text, chat_id, message_id)
+        else:
+            bot.send_message(chat_id, text)
         logging.exception(f"Error listing directory {path}")
         return
 
     _current_dirs[uid] = path
     dirs = sorted([e for e in entries if os.path.isdir(os.path.join(path, e))])
-    fls  = sorted([e for e in entries if os.path.isfile(os.path.join(path, e))])
+
+    # Фильтруем ненужные файлы (.lnk, .ini, .url)
+    skip_extensions = ('.lnk', '.ini', '.url')
+    fls = sorted([e for e in entries
+                  if os.path.isfile(os.path.join(path, e))
+                  and not e.lower().endswith(skip_extensions)])
+    logging.info(f"Files found in {path}: {len(fls)} files after filtering")
 
     kb = telebot.types.InlineKeyboardMarkup(row_width=1)
     # Кнопка "вверх"
@@ -64,21 +82,22 @@ def _send_dir(bot, chat_id, uid, path):
         parent_hash = _store_path(parent)
         kb.add(telebot.types.InlineKeyboardButton("⬆️ ..", callback_data=f"fl_cd_{parent_hash}"))
 
-    for d in dirs[:15]:
+    for d in dirs[:30]:
         full = os.path.join(path, d)
         full_hash = _store_path(full)
         kb.add(telebot.types.InlineKeyboardButton(f"📂 {d}", callback_data=f"fl_cd_{full_hash}"))
 
-    for f in fls[:10]:
+    for f in fls[:30]:
         full = os.path.join(path, f)
         try:
             size = os.path.getsize(full)
             label = f"📄 {f} ({_fmt_size(size)})"
-            full_hash = _store_path(full)
-            kb.add(telebot.types.InlineKeyboardButton(label, callback_data=f"fl_file_{full_hash}"))
         except Exception as e:
             logging.warning(f"Cannot get size for {full}: {e}")
-            continue
+            label = f"📄 {f}"
+
+        full_hash = _store_path(full)
+        kb.add(telebot.types.InlineKeyboardButton(label, callback_data=f"fl_file_{full_hash}"))
 
     kb.row(
         telebot.types.InlineKeyboardButton("📤 Получить файл", callback_data="fl_download"),
@@ -86,7 +105,10 @@ def _send_dir(bot, chat_id, uid, path):
     )
 
     text = f"📁 `{path}`\n{len(dirs)} папок, {len(fls)} файлов"
-    bot.send_message(chat_id, text, reply_markup=kb)
+    if message_id:
+        bot.edit_message_text(text, chat_id, message_id, reply_markup=kb, parse_mode="Markdown")
+    else:
+        bot.send_message(chat_id, text, reply_markup=kb, parse_mode="Markdown")
 
 
 def _fmt_size(b):
@@ -104,7 +126,7 @@ def setup(bot: telebot.TeleBot, is_allowed):
         bot.answer_callback_query(call.id)
         path_hash = call.data.replace("fl_cd_", "")
         path = _get_path(path_hash)
-        _send_dir(bot, call.message.chat.id, call.from_user.id, path)
+        _send_dir(bot, call.message.chat.id, call.from_user.id, path, call.message.message_id)
 
     @bot.callback_query_handler(func=lambda c: c.data.startswith("fl_file_"))
     def show_file(call):
