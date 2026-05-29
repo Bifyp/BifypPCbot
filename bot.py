@@ -14,7 +14,7 @@ from handlers import (
     apps, screenshot, terminal, media,
     browser, files, system, input_handler,
     clipboard, tts, alerts, log, favorites,
-    camera, audio, network, autoscreenshot, installer, scheduler, macros
+    camera, audio, network, autoscreenshot, installer, scheduler, macros, anydesk
 )
 
 logging.basicConfig(
@@ -85,7 +85,8 @@ def cmd_start(message):
     keyboard.row("🔊 TTS",         "🔔 Алерты",   "📜 Лог")
     keyboard.row("⭐ Избранное",   "📷 Камера",   "🎙 Звук")
     keyboard.row("🌐 Сеть",        "🖼 Авто-фото","📦 Установка")
-    keyboard.row("⏰ Планировщик", "⌨️ Макросы",  "📹 Удалённый доступ")
+    keyboard.row("⏰ Планировщик", "⌨️ Макросы",  "🖥️ AnyDesk")
+    keyboard.row("📹 Веб-панель")
 
     banner = os.path.join(os.path.dirname(__file__), "start_banner.jpg")
     try:
@@ -107,7 +108,8 @@ def cmd_start(message):
 # ─── Меню → хендлеры ──────────────────────────────────────────────────────────
 
 MENU = {
-    "📹 Удалённый доступ": "_remote",
+    "📹 Веб-панель":       "_remote",
+    "🖥️ AnyDesk":          "_anydesk",
     "📸 Скриншот":         "_scr",
     "📁 Файлы":            "_files",
     "💻 Терминал":         "_term",
@@ -134,7 +136,9 @@ MENU = {
 @bot.message_handler(func=lambda m: is_allowed(m) and m.text in MENU)
 def menu_handler(message):
     key = MENU[message.text]
-    if key == "_remote":
+    if key == "_anydesk":
+        anydesk.register(bot, message)
+    elif key == "_remote":
         from web.server import get_tunnel_url
 
         url = get_tunnel_url()
@@ -214,6 +218,7 @@ def _register_all():
     installer.setup(bot, is_allowed)
     scheduler.setup(bot, is_allowed)
     macros.setup(bot, is_allowed)
+    anydesk.setup(bot, is_allowed)
 
 
 # ─── Запуск ───────────────────────────────────────────────────────────────────
