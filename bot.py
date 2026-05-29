@@ -5,6 +5,7 @@ import threading
 import time
 import logging
 import os
+from typing import Any, Optional
 
 from config import BOT_TOKEN, ALLOWED_IDS
 from web.server import start_web_server, set_bot_ref
@@ -20,30 +21,55 @@ logging.basicConfig(
     filename="bot.log",
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    encoding="utf-8"
+    encoding="utf-8",
 )
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="Markdown")
 
 
-def is_allowed(message_or_call):
-    """
-    Принимает Message или CallbackQuery.
-    - Message: from_user.id — это пользователь ✅
-    - CallbackQuery: message.from_user — это БОТ ❌, нужно call.from_user ✅
+def _get_user_id(message_or_call: Any) -> Optional[int]:
+    """Достаёт user id из Message или CallbackQuery.
+
+    Важно:
+    - CallbackQuery: uid = call.from_user.id
+    - Message: uid = message.from_user.id
+
+    Мы НЕ используем fallback на chat.id, чтобы случайно не перепутать
+    контекст (группы/каналы) и пользователя.
     """
     obj = message_or_call
-    # Если передали CallbackQuery напрямую (call, не call.message)
-    if hasattr(obj, "data"):  # это CallbackQuery
-        uid = getattr(obj, "from_user", None)
-        return uid is not None and uid.id in ALLOWED_IDS
-    # Обычное Message
-    uid = getattr(obj, "from_user", None)
-    if uid is None:
-        uid = getattr(obj, "chat", None)
-    if uid is None:
-        return False
-    return (uid.id if hasattr(uid, "id") else uid) in ALLOWED_IDS
+
+    # CallbackQuery у telebot имеет поле data
+    if hasattr(obj, "data"):
+        u = getattr(obj, "from_user", None)
+        uid = getattr(u, "id", None)
+        return int(uid) if uid is not None else None
+
+    # Message
+    u = getattr(obj, "from_user", None)
+    uid = getattr(u, "id", None)
+    return int(uid) if uid is not None else None
+
+
+def is_allowed(message_or_call: Any) -> bool:
+    """Единая проверка доступа для Message и CallbackQuery."""
+    uid = _get_user_id(message_or_call)
+    return uid is not None and uid in ALLOWED_IDS
+
+
+def run_safe_thread(name: str, target, args=(), daemon: bool = True) -> threading.Thread:
+    """Запускает поток с try/except, чтобы исключения не умирали молча."""
+
+    def _runner():
+        try:
+            logging.info(f"[thread:{name}] started")
+            target(*args)
+        except Exception:
+            logging.exception(f"[thread:{name}] crashed")
+
+    t = threading.Thread(target=_runner, daemon=daemon, name=name)
+    t.start()
+    return t
 
 
 # ─── /start ───────────────────────────────────────────────────────────────────
@@ -65,14 +91,17 @@ def cmd_start(message):
     try:
         with open(banner, "rb") as img:
             bot.send_photo(
-                message.chat.id, img,
+                message.chat.id,
+                img,
                 caption="✅ *PC Control Bot v2.0 запущен!*\nВыбери раздел 👇",
-                reply_markup=keyboard
+                reply_markup=keyboard,
             )
     except Exception:
-        bot.send_message(message.chat.id,
-                         "✅ *PC Control Bot v2.0*\nВыбери раздел:",
-                         reply_markup=keyboard)
+        bot.send_message(
+            message.chat.id,
+            "✅ *PC Control Bot v2.0*\nВыбери раздел:",
+            reply_markup=keyboard,
+        )
 
 
 # ─── Меню → хендлеры ──────────────────────────────────────────────────────────
@@ -107,34 +136,59 @@ def menu_handler(message):
     key = MENU[message.text]
     if key == "_remote":
         from web.server import get_tunnel_url
+
         url = get_tunnel_url()
         if url:
-            bot.send_message(message.chat.id,
-                             f"🌐 *Веб-панель:*\n{url}\n\n🔒 Введи пароль из `config.py`\n"
-                             f"⏱ Сессия истекает через 2 часа")
+            bot.send_message(
+                message.chat.id,
+                f"🌐 *Веб-панель:*\n{url}\n\n🔒 Пароль в `.env` (WEB_PANEL_PASSWORD)\n"
+                f"⏱ Сессия истекает через 2 часа",
+            )
         else:
-            bot.send_message(message.chat.id,
-                             "⏳ Туннель запускается, подожди 10–15 сек...")
-    elif key == "_scr":     screenshot.register(bot, message)
-    elif key == "_files":   files.register(bot, message)
-    elif key == "_term":    terminal.register(bot, message)
-    elif key == "_media":   media.register(bot, message)
-    elif key == "_browser": browser.register(bot, message)
-    elif key == "_system":  system.register(bot, message)
-    elif key == "_apps":    apps.register(bot, message)
-    elif key == "_input":   input_handler.register(bot, message)
-    elif key == "_clip":    clipboard.register(bot, message)
-    elif key == "_tts":     tts.register(bot, message)
-    elif key == "_alerts":  alerts.register(bot, message)
-    elif key == "_log":     log.register(bot, message)
-    elif key == "_fav":     favorites.register(bot, message)
-    elif key == "_cam":     camera.register(bot, message)
-    elif key == "_audio":   audio.register(bot, message)
-    elif key == "_net":     network.register(bot, message)
-    elif key == "_asc":     autoscreenshot.register(bot, message)
-    elif key == "_inst":    installer.register(bot, message)
-    elif key == "_sched":   scheduler.register(bot, message)
-    elif key == "_macros":  macros.register(bot, message)
+            bot.send_message(
+                message.chat.id,
+                "⏳ Туннель запускается, подожди 10–15 сек...",
+            )
+    elif key == "_scr":
+        screenshot.register(bot, message)
+    elif key == "_files":
+        files.register(bot, message)
+    elif key == "_term":
+        terminal.register(bot, message)
+    elif key == "_media":
+        media.register(bot, message)
+    elif key == "_browser":
+        browser.register(bot, message)
+    elif key == "_system":
+        system.register(bot, message)
+    elif key == "_apps":
+        apps.register(bot, message)
+    elif key == "_input":
+        input_handler.register(bot, message)
+    elif key == "_clip":
+        clipboard.register(bot, message)
+    elif key == "_tts":
+        tts.register(bot, message)
+    elif key == "_alerts":
+        alerts.register(bot, message)
+    elif key == "_log":
+        log.register(bot, message)
+    elif key == "_fav":
+        favorites.register(bot, message)
+    elif key == "_cam":
+        camera.register(bot, message)
+    elif key == "_audio":
+        audio.register(bot, message)
+    elif key == "_net":
+        network.register(bot, message)
+    elif key == "_asc":
+        autoscreenshot.register(bot, message)
+    elif key == "_inst":
+        installer.register(bot, message)
+    elif key == "_sched":
+        scheduler.register(bot, message)
+    elif key == "_macros":
+        macros.register(bot, message)
 
 
 # ─── Регистрация хендлеров ────────────────────────────────────────────────────
@@ -171,19 +225,24 @@ if __name__ == "__main__":
     set_bot_ref(bot, ALLOWED_IDS)
 
     # Flask + cloudflared
-    threading.Thread(target=start_web_server, daemon=True).start()
+    run_safe_thread("web", start_web_server)
 
     # Системные алерты
-    threading.Thread(target=alerts.start_monitoring,
-                     args=(bot, ALLOWED_IDS), daemon=True).start()
+    run_safe_thread("alerts", alerts.start_monitoring, args=(bot, ALLOWED_IDS))
 
     # Авто-скриншоты + детект активности
-    threading.Thread(target=autoscreenshot.start_auto_tasks,
-                     args=(bot, ALLOWED_IDS), daemon=True).start()
+    run_safe_thread(
+        "autoscreenshot",
+        autoscreenshot.start_auto_tasks,
+        args=(bot, ALLOWED_IDS),
+    )
 
     # Планировщик задач
-    threading.Thread(target=scheduler.start_scheduler,
-                     args=(bot, ALLOWED_IDS), daemon=True).start()
+    run_safe_thread(
+        "scheduler",
+        scheduler.start_scheduler,
+        args=(bot, ALLOWED_IDS),
+    )
 
     # Регистрация хендлеров
     _register_all()
@@ -192,19 +251,31 @@ if __name__ == "__main__":
     def notify_online():
         time.sleep(30)
         from web.server import get_tunnel_url
+
         url = get_tunnel_url() or "_(туннель ещё запускается)_"
         for uid in ALLOWED_IDS:
             try:
-                bot.send_message(uid,
+                bot.send_message(
+                    uid,
                     f"✅ *PC Control Bot v2.0 онлайн!*\n"
                     f"🌐 Веб-панель: {url}\n"
                     f"🔒 Сессия: 2 часа\n"
-                    f"📡 WebSocket: активен")
+                    f"📡 WebSocket: активен",
+                )
             except Exception as e:
                 logging.warning(f"notify error: {e}")
 
-    threading.Thread(target=notify_online, daemon=True).start()
+    run_safe_thread("notify", notify_online)
 
     logging.info("Polling запущен")
 
-    bot.infinity_polling(timeout=30, long_polling_timeout=15)
+    # Защита от временных сетевых глюков: если polling упал — перезапускаем.
+    backoff = 2
+    while True:
+        try:
+            bot.infinity_polling(timeout=30, long_polling_timeout=15)
+            backoff = 2
+        except Exception:
+            logging.exception(f"Polling crashed; restarting in {backoff}s")
+            time.sleep(backoff)
+            backoff = min(60, backoff * 2)
