@@ -11,14 +11,13 @@
 
 **`// WINDOWS PC REMOTE CONTROL v2.0`**
 
-*telegram-бот · веб-панель · anydesk · whitelist-безопасность*
+*telegram-бот · anydesk · whitelist-безопасность*
 
 ---
 
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot_API-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://core.telegram.org/bots)
 [![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com)
-[![Flask](https://img.shields.io/badge/Flask-WebPanel-000000?style=for-the-badge&logo=flask&logoColor=white)](https://github.com)
 [![Security](https://img.shields.io/badge/Security-Whitelist-00FFCC?style=for-the-badge)](https://github.com)
 
 </div>
@@ -32,9 +31,8 @@
   ║   ────────────────         ────────           ─────────────────      ║
   ║   [ 📸 Screenshot ]  ──━━━━━━━━━━━━━━━━━━━━━  bot.py                 ║
   ║   [ 💻 Terminal   ]                            ├── handlers/         ║
-  ║   [ 📁 Files      ]  ━━━━━━━━━━━━━━━━━━━━━━  ├── web/               ║
-  ║   [ 🖥️ AnyDesk    ]                            ├── Win32 API         ║
-  ║   [ 📹 Web Panel  ]                            └── WebSocket         ║
+  ║   [ 📁 Files      ]  ━━━━━━━━━━━━━━━━━━━━━━  ├── Win32 API          ║
+  ║   [ 🖥️ AnyDesk    ]                            └── Automation        ║
   ║                                                                      ║
   ║   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ║
   ║   STATUS: // ONLINE   ▌  SECURITY: WHITELIST   ▌  OS: WINDOWS        ║
@@ -48,7 +46,6 @@
 | МОДУЛЬ | ОПИСАНИЕ | СТАТУС |
 |:-------|:---------|:------:|
 | `ANYDESK` | Запуск AnyDesk для полного GUI доступа | `[ACTIVE]` |
-| `WEB_PANEL` | WebSocket панель с real-time управлением | `[ACTIVE]` |
 | `SCREENSHOT` | Скриншоты (ручные + автоматические) | `[ACTIVE]` |
 | `TERMINAL` | Выполнение CMD команд | `[ACTIVE]` |
 | `FILES` | Файловый менеджер (загрузка/удаление) | `[ACTIVE]` |
@@ -107,11 +104,8 @@ cp .env.example .env
 BOT_TOKEN=your_bot_token_here
 ALLOWED_USER_IDS=123456789,987654321
 
-# ── WEB PANEL ─────────────────────────────────────
-WEB_PANEL_PASSWORD=YourSecureP@ssw0rd!2024
-FLASK_PORT=5000
-
 # ── SECURITY ──────────────────────────────────────
+WEB_PANEL_PASSWORD=YourSecureP@ssw0rd!2024
 SESSION_LIFETIME_HOURS=2
 MAX_LOGIN_ATTEMPTS=5
 NOTIFY_ON_WEB_LOGIN=True
@@ -146,7 +140,6 @@ start_watchdog.vbs
 ║   РАЗДЕЛ                  ║   ФУНКЦИИ                                ║
 ╠═══════════════════════════╬══════════════════════════════════════════╣
 ║  🖥️ AnyDesk               ║  Запуск AnyDesk для GUI доступа          ║
-║  📹 Веб-панель            ║  WebSocket панель управления             ║
 ║  📸 Скриншот              ║  Захват экрана                           ║
 ║  📁 Файлы                 ║  Файловый менеджер                       ║
 ║  💻 Терминал              ║  Выполнение команд                       ║
@@ -196,30 +189,6 @@ start_watchdog.vbs
 
 ---
 
-## `> WEB.PANEL`
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│   [!] Автоматический запуск через cloudflared tunnel            │
-│   [!] WebSocket для real-time управления                        │
-│   [!] Удалённый рабочий стол через браузер                      │
-│                                                                 │
-│   ФУНКЦИИ:                                                      │
-│   • Просмотр экрана в реальном времени                          │
-│   • Управление мышью/клавиатурой                                │
-│   • Статистика системы (CPU/RAM/диск)                           │
-│   • Файловый менеджер                                           │
-│   • Редактор кода                                               │
-│   • Clipboard sync                                              │
-│                                                                 │
-│   ДОСТУП: Нажми "📹 Веб-панель" в боте → получи URL             │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## `> SECURITY.PROTOCOL`
 
 ```
@@ -227,12 +196,6 @@ start_watchdog.vbs
 │                                                                 │
 │   [!] WHITELIST MODE                                            │
 │       Только разрешённые пользователи (ALLOWED_USER_IDS)        │
-│                                                                 │
-│   [!] WEB PANEL PASSWORD                                        │
-│       Защита веб-панели паролем + rate limiting                 │
-│                                                                 │
-│   [!] SESSION MANAGEMENT                                        │
-│       Автоматическое истечение сессий (2 часа)                  │
 │                                                                 │
 │   [!] LOGGING                                                   │
 │       Все действия записываются в bot.log                       │
@@ -278,12 +241,6 @@ BifypPC/
 │   ├── log.py               логи
 │   └── apps.py              приложения
 │
-├── web/                      веб-панель
-│   ├── server.py            Flask + WebSocket сервер
-│   └── templates/           HTML шаблоны
-│       ├── login.html
-│       └── panel.html
-│
 ├── requirements.txt          зависимости Python
 ├── .env.example              шаблон конфигурации
 ├── .gitignore                исключения для git
@@ -314,13 +271,7 @@ BifypPC/
 ║  • Подключиться с телефона                                    ║
 ║  • Полный GUI доступ                                          ║
 ║                                                               ║
-║  СЦЕНАРИЙ 3: Веб-панель                                       ║
-║  ───────────────────────                                      ║
-║  • Нажать "📹 Веб-панель"                                     ║
-║  • Открыть URL в браузере                                     ║
-║  • Управление через WebSocket                                 ║
-║                                                               ║
-║  СЦЕНАРИЙ 4: Мониторинг                                       ║
+║  СЦЕНАРИЙ 3: Мониторинг                                       ║
 ║  ───────────────────────                                      ║
 ║  • Автоалерты при высокой нагрузке                            ║
 ║  • Автоскриншоты каждые N минут                               ║
@@ -341,9 +292,6 @@ BifypPC/
 │                                                                 │
 │  Q: AnyDesk не запускается                                      │
 │  A: Установи AnyDesk с anydesk.com                              │
-│                                                                 │
-│  Q: Веб-панель не открывается                                   │
-│  A: Подожди 30 сек после запуска (cloudflared tunnel)           │
 │                                                                 │
 │  Q: Ошибка "Module not found"                                   │
 │  A: pip install -r requirements.txt                             │
