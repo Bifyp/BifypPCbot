@@ -325,9 +325,3 @@ BifypPC/
 **MIT License** · Made with  for remote PC control
 
 </div>
-<<<<<<< HEAD
-=======
-
- 
- 
->>>>>>> da9db778e46a0ca4dc616f6385b067b13b82bbba
