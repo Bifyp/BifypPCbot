@@ -1,5 +1,36 @@
 <div align="center">
 
+~~~text
+██████╗ ██████╗  ██████╗      ██╗███████╗ ██████╗████████╗
+██╔══██╗██╔══██╗██╔═══██╗     ██║██╔════╝██╔════╝╚══██╔══╝
+██████╔╝██████╔╝██║   ██║     ██║█████╗  ██║        ██║
+██╔══██╗██╔══██╗██║   ██║██   ██║██╔══╝  ██║        ██║
+██████╔╝██║  ██║╚██████╔╝╚█████╔╝███████╗╚██████╗   ██║
+╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ╚════╝ ╚══════╝ ╚═════╝   ╚═╝
+~~~
+
+**// BIFYPPCBOT · PROJECT README**
+
+*source · setup · architecture · security*
+
+[![README style](https://img.shields.io/badge/README-Codex%20Style-00D9FF?style=for-the-badge)](https://github.com/Bifyp/codex-agent-workbench)
+
+</div>
+
+---
+
+## > PROJECT.STATUS
+
+| FIELD | VALUE |
+|:--|:--|
+| Repository | Bifyp/BifypPCbot |
+| Documentation | Russian README + English README.en.md |
+| Secrets | Never commit tokens, keys, sessions, or .env files |
+
+## > PROJECT.DOCUMENTATION
+
+<div align="center">
+
 ```
 ██████╗ ██╗███████╗██╗   ██╗██████╗ ██████╗  ██████╗
 ██╔══██╗██║██╔════╝╚██╗ ██╔╝██╔══██╗██╔══██╗██╔════╝
